@@ -40,6 +40,19 @@ public class DB2Scanner extends CPreprocessor {
 			IToken peekNextToken;
 			while (true) {
 				nextToken = super.nextToken();
+				if ("sqlca".equalsIgnoreCase(nextToken.toString())) {
+					// To prevent warning, assign dummy value.
+					IToken t1 = new TokenWithImage(IToken.t_struct, this, nextToken.getOffset(),
+							nextToken.getEndOffset(), TokenUtil.getImage(IToken.t_struct));
+					IToken t2 = new TokenWithImage(IToken.tIDENTIFIER, this, nextToken.getOffset(),
+							nextToken.getEndOffset(), "sqlca".toCharArray());
+					IToken t3 = new TokenWithImage(IToken.tIDENTIFIER, this, nextToken.getOffset(),
+							nextToken.getEndOffset(), "sqlca".toCharArray());
+					tokens.add(t1);
+					tokens.add(t2);
+					tokens.add(t3);
+					continue;
+				}
 				if ("call".equalsIgnoreCase(nextToken.toString())) {
 					return super.nextToken();
 				}
