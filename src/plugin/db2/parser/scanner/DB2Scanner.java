@@ -41,6 +41,9 @@ public class DB2Scanner extends CPreprocessor {
 			while (true) {
 				nextToken = super.nextToken();
 				if ("sqlca".equalsIgnoreCase(nextToken.toString())) {
+					DB2TokenUtil.addSqlcaTokens(this, nextToken);
+					DB2TokenUtil.addGlobalVariableTokens(this, nextToken);
+					DB2TokenUtil.addTypeDefs(this, nextToken);
 					// To prevent warning, assign dummy value.
 					IToken t1 = new TokenWithImage(IToken.t_struct, this, nextToken.getOffset(),
 							nextToken.getEndOffset(), TokenUtil.getImage(IToken.t_struct));
@@ -87,32 +90,11 @@ public class DB2Scanner extends CPreprocessor {
 				}
 			}
 		}
-
-		// SQLCODE
-		if ("SQLCODE".equals(nextToken.toString())) {
-			// add fake int token
-			IToken token = new TokenWithImage(IToken.tINTEGER, this, nextToken.getOffset(), nextToken.getEndOffset(),
-					"1".toCharArray());
-			return token;
-		}
-
-		// SQLSTATE
-		if ("SQLSTATE".equals(nextToken.toString())) {
-			// add fake char token
-			IToken token = new TokenWithImage(IToken.tSTRING, this, nextToken.getOffset(), nextToken.getEndOffset(),
-					"\"FAKE_STRING\"".toCharArray());
-			return token;
-		}
-
-		// sqlint32
-		if ("sqlint32".equalsIgnoreCase(nextToken.toString())) {
-			// add fake int token
-			IToken token = new TokenWithImage(IToken.t_int, this, nextToken.getOffset(), nextToken.getEndOffset(),
-					TokenUtil.getImage(IToken.t_int));
-			return token;
-		}
-
 		return nextToken;
+	}
+
+	public Queue<IToken> getTokens() {
+		return tokens;
 	}
 
 	private IToken clearPrefetchedToken(IToken token) {
@@ -121,4 +103,5 @@ public class DB2Scanner extends CPreprocessor {
 		}
 		return token;
 	}
+
 }
