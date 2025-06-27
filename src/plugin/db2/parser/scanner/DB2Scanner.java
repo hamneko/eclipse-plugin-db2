@@ -31,7 +31,7 @@ public class DB2Scanner extends CPreprocessor {
 	@Override
 	public IToken nextToken() throws EndOfFileException {
 		if (tokens.peek() != null) {
-			return tokens.poll();
+			return clearPrefetchedToken(tokens.poll());
 		}
 		IToken nextToken = super.nextToken();
 
@@ -53,96 +53,38 @@ public class DB2Scanner extends CPreprocessor {
 					}
 					return peekNextToken;
 				}
-				if (":".equalsIgnoreCase(nextToken.toString())) {
+				if (":".equals(nextToken.toString())) {
 					nextToken = super.nextToken();
 					// To prevent warning, assign dummy value.
 					IToken t1 = new TokenWithImage(IToken.tASSIGN, this, nextToken.getOffset(),
 							nextToken.getEndOffset(), TokenUtil.getImage(IToken.tASSIGN));
 					IToken t2 = new TokenWithImage(IToken.tSTRING, this, nextToken.getOffset(),
 							nextToken.getEndOffset(), "\"FAKE_STRING\"".toCharArray());
-					peekNextToken = super.nextToken();
-					nextToken.setNext(null);
-					if (!";".equals(peekNextToken.toString())) {
-						IToken t3 = new TokenWithImage(IToken.tCOMMA, this, nextToken.getOffset(),
-								nextToken.getEndOffset(), TokenUtil.getImage(IToken.tCOMMA));
-						tokens.add(nextToken);
-						tokens.add(t1);
-						tokens.add(t2);
-						tokens.add(t3);
-						continue;
-					} else {
-						tokens.add(nextToken);
-						tokens.add(t1);
-						tokens.add(t2);
-						tokens.add(peekNextToken);
-						return tokens.poll();
-					}
+					IToken t3 = new TokenWithImage(IToken.tSEMI, this, nextToken.getOffset(), nextToken.getEndOffset(),
+							TokenUtil.getImage(IToken.tSEMI));
+					tokens.add(nextToken);
+					tokens.add(t1);
+					tokens.add(t2);
+					tokens.add(t3);
+					continue;
 				}
 				if (";".equals(nextToken.toString())) {
-					peekNextToken = super.nextToken();
-					nextToken.setNext(null);
-					if (!"exec".equalsIgnoreCase(peekNextToken.toString())) {
-						tokens.add(peekNextToken);
-						return nextToken;
-					}
+					tokens.add(nextToken);
+					return clearPrefetchedToken(tokens.poll());
 				}
 			}
 		}
 
-		// sqlca
-		if ("sqlca".equalsIgnoreCase(nextToken.toString())) {
-			//
-			nextToken = super.nextToken();
-			if (!".".equals(nextToken.toString())) {
-				return nextToken;
-			}
-			//
-			nextToken = super.nextToken();
-			if ("sqlcaid".equalsIgnoreCase(nextToken.toString())) {
-				// char sqlcaid[8];
-				nextToken.setType(IToken.tINTEGER);
-			} else if ("sqlabc".equalsIgnoreCase(nextToken.toString())) {
-				// long sqlabc;
-				nextToken.setType(IToken.tINTEGER);
-			} else if ("sqlcode".equalsIgnoreCase(nextToken.toString())) {
-				// long sqlcode;
-				nextToken.setType(IToken.tINTEGER);
-			} else if ("sqlerrm".equalsIgnoreCase(nextToken.toString())) {
-				// sqlerrm
-				nextToken = super.nextToken();
-				if (".".equals(nextToken.toString())) {
-					nextToken = super.nextToken();
-					if ("sqlerrml".equalsIgnoreCase(nextToken.toString())
-							|| "sqlerrmc".equalsIgnoreCase(nextToken.toString())) {
-						// int sqlerrml; or char sqlerrmc[SQLERRMC_LEN];
-						nextToken.setType(IToken.tINTEGER);
-					}
-				}
-			} else if ("sqlerrp".equalsIgnoreCase(nextToken.toString())) {
-				// char sqlerrp[8];
-				nextToken.setType(IToken.tINTEGER);
-			} else if ("sqlerrd".equalsIgnoreCase(nextToken.toString())) {
-				// long sqlerrd[6];
-				nextToken.setType(IToken.tINTEGER);
-			} else if ("sqlwarn".equalsIgnoreCase(nextToken.toString())) {
-				// char sqlwarn[8];
-				nextToken.setType(IToken.tINTEGER);
-			} else if ("sqlstate".equalsIgnoreCase(nextToken.toString())) {
-				// char sqlstate[5];
-				nextToken.setType(IToken.tINTEGER);
-			}
-		}
-
-		// sqlcode
-		if ("sqlcode".equalsIgnoreCase(nextToken.toString())) {
+		// SQLCODE
+		if ("SQLCODE".equals(nextToken.toString())) {
 			// add fake int token
 			IToken token = new TokenWithImage(IToken.tINTEGER, this, nextToken.getOffset(), nextToken.getEndOffset(),
 					"1".toCharArray());
 			return token;
 		}
 
-		// sqlstate
-		if ("sqlstate".equalsIgnoreCase(nextToken.toString())) {
+		// SQLSTATE
+		if ("SQLSTATE".equals(nextToken.toString())) {
 			// add fake char token
 			IToken token = new TokenWithImage(IToken.tSTRING, this, nextToken.getOffset(), nextToken.getEndOffset(),
 					"\"FAKE_STRING\"".toCharArray());
@@ -160,4 +102,10 @@ public class DB2Scanner extends CPreprocessor {
 		return nextToken;
 	}
 
+	private IToken clearPrefetchedToken(IToken token) {
+		if (token.getNext() != null) {
+			token.setNext(null);
+		}
+		return token;
+	}
 }
