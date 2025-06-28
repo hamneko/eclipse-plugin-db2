@@ -12,8 +12,6 @@ import org.eclipse.cdt.core.parser.IToken;
 import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
 import org.eclipse.cdt.core.parser.ParserLanguage;
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
-import org.eclipse.cdt.internal.core.parser.scanner.TokenUtil;
-import org.eclipse.cdt.internal.core.parser.scanner.TokenWithImage;
 
 @SuppressWarnings("restriction")
 public class DB2Scanner extends CPreprocessor {
@@ -34,54 +32,39 @@ public class DB2Scanner extends CPreprocessor {
 			return clearPrefetchedToken(tokens.poll());
 		}
 		IToken nextToken = super.nextToken();
-
-		// Ignore from "EXEC" to ";" tokens.
+		// Process "EXEC" to ";" tokens.
 		if ("exec".equalsIgnoreCase(nextToken.toString())) {
-			IToken peekNextToken;
 			while (true) {
 				nextToken = super.nextToken();
 				if ("sqlca".equalsIgnoreCase(nextToken.toString())) {
 					DB2TokenUtil.addSqlcaTokens(this, nextToken);
 					DB2TokenUtil.addGlobalVariableTokens(this, nextToken);
 					DB2TokenUtil.addTypeDefs(this, nextToken);
-					// To prevent warning, assign dummy value.
-					IToken t1 = new TokenWithImage(IToken.t_struct, this, nextToken.getOffset(),
-							nextToken.getEndOffset(), TokenUtil.getImage(IToken.t_struct));
-					IToken t2 = new TokenWithImage(IToken.tIDENTIFIER, this, nextToken.getOffset(),
-							nextToken.getEndOffset(), "sqlca".toCharArray());
-					IToken t3 = new TokenWithImage(IToken.tIDENTIFIER, this, nextToken.getOffset(),
-							nextToken.getEndOffset(), "sqlca".toCharArray());
-					tokens.add(t1);
-					tokens.add(t2);
-					tokens.add(t3);
+					// Initialize sqlca struct.
+					tokens.add(DB2TokenUtil.createStructToken(this, nextToken));
+					tokens.add(DB2TokenUtil.createIdentifierToken(this, nextToken, "sqlca"));
+					tokens.add(DB2TokenUtil.createIdentifierToken(this, nextToken, "sqlca"));
 					continue;
 				}
 				if ("call".equalsIgnoreCase(nextToken.toString())) {
 					return super.nextToken();
 				}
 				if ("do".equalsIgnoreCase(nextToken.toString())) {
-					peekNextToken = super.nextToken();
-					nextToken.setNext(null);
-					if ("break".equalsIgnoreCase(peekNextToken.toString())
-							|| "continue".equalsIgnoreCase(peekNextToken.toString())) {
-						// ignore those tokens
+					nextToken = super.nextToken();
+					if ("break".equalsIgnoreCase(nextToken.toString())
+							|| "continue".equalsIgnoreCase(nextToken.toString())) {
+						// ignore those tokens.
 						continue;
 					}
-					return peekNextToken;
+					return nextToken;
 				}
 				if (":".equals(nextToken.toString())) {
 					nextToken = super.nextToken();
-					// To prevent warning, assign dummy value.
-					IToken t1 = new TokenWithImage(IToken.tASSIGN, this, nextToken.getOffset(),
-							nextToken.getEndOffset(), TokenUtil.getImage(IToken.tASSIGN));
-					IToken t2 = new TokenWithImage(IToken.tSTRING, this, nextToken.getOffset(),
-							nextToken.getEndOffset(), "\"FAKE_STRING\"".toCharArray());
-					IToken t3 = new TokenWithImage(IToken.tSEMI, this, nextToken.getOffset(), nextToken.getEndOffset(),
-							TokenUtil.getImage(IToken.tSEMI));
+					// Modify tokens to be treated as variables.
 					tokens.add(nextToken);
-					tokens.add(t1);
-					tokens.add(t2);
-					tokens.add(t3);
+					tokens.add(DB2TokenUtil.createAssignToken(this, nextToken));
+					tokens.add(DB2TokenUtil.createIntegerToken(this, nextToken, "0"));
+					tokens.add(DB2TokenUtil.createSemiToken(this, nextToken));
 					continue;
 				}
 				if (";".equals(nextToken.toString())) {
@@ -93,7 +76,7 @@ public class DB2Scanner extends CPreprocessor {
 		return nextToken;
 	}
 
-	public Queue<IToken> getTokens() {
+	public Queue<IToken> tokens() {
 		return tokens;
 	}
 
