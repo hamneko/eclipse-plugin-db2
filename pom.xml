@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>plugin.db2</groupId>
   <artifactId>plugin.db2</artifactId>
-  <version>0.0.3</version>
+  <version>0.1.0</version>
   <packaging>eclipse-plugin</packaging>
   <properties>
     <tycho.version>4.0.12</tycho.version>
@@ -34,4 +34,12 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <dependency>
+      <groupId>plugin.common</groupId>
+      <artifactId>plugin.common</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+  </dependencies>
+
 </project>
