@@ -1,6 +1,7 @@
 package plugin.db2.parser.scanner;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.parser.IScannerExtensionConfiguration;
@@ -18,6 +19,8 @@ import plugin.common.parser.scanner.PluginTokenUtil;
 @SuppressWarnings("restriction")
 public class DB2Scanner extends PluginScanner {
 
+	private List<ExecSqlPosition> execSqlPositions;
+
 	private Map<String, String> cursorVariables = new HashMap<>();
 
 	public DB2Scanner(FileContent fileContent, IScannerInfo info, ParserLanguage language, IParserLogService log,
@@ -25,25 +28,42 @@ public class DB2Scanner extends PluginScanner {
 		super(fileContent, info, language, log, configuration, readerFactory);
 	}
 
+	public DB2Scanner(FileContent fileContent, IScannerInfo info, ParserLanguage language, IParserLogService log,
+			IScannerExtensionConfiguration configuration, IncludeFileContentProvider readerFactory,
+			List<ExecSqlPosition> execSqlPositions) {
+		super(fileContent, info, language, log, configuration, readerFactory);
+		this.execSqlPositions = execSqlPositions;
+	}
+
 	@Override
 	public IToken nextToken() throws EndOfFileException {
 		if (tokens().peek() != null) {
 			return clearPrefetchedToken(tokens().poll());
 		}
+		// Initialize required variables
+		int from = 0, to = 0;
+		boolean colonStarted = false;
+		boolean immediateAfterComma = false;
+		boolean immediateAfterVariable = false;
 		IToken nextToken = super.nextToken();
 		// Process "EXEC" to ";" tokens().
 		if ("exec".equalsIgnoreCase(nextToken.toString())) {
+			from = nextToken.getOffset();
 			while (true) {
 				nextToken = super.nextToken();
 				if ("sqlca".equalsIgnoreCase(nextToken.toString())) {
+					to = nextToken.getOffset();
+					immediateAfterVariable = true;
 					// In DB2, EXEC SQL INCLUDE SQLCA; must be declared for sqlca.
 					PluginTokenUtil.addSqlcaTokens(this, nextToken);
-					PluginTokenUtil.addGlobalVariableTokens(this, nextToken);
-					PluginTokenUtil.addTypeDefs(this, nextToken);
 					// Initialize sqlca struct.
 					tokens().add(PluginTokenUtil.createStructToken(this, nextToken));
 					tokens().add(PluginTokenUtil.createIdentifierToken(this, nextToken, "sqlca"));
 					tokens().add(PluginTokenUtil.createIdentifierToken(this, nextToken, "sqlca"));
+					tokens().add(PluginTokenUtil.createSemiToken(this, nextToken));
+					//
+					PluginTokenUtil.addGlobalVariableTokens(this, nextToken);
+					PluginTokenUtil.addTypeDefs(this, nextToken);
 					continue;
 				}
 				if ("call".equalsIgnoreCase(nextToken.toString())) {
@@ -72,6 +92,8 @@ public class DB2Scanner extends PluginScanner {
 					continue;
 				}
 				if (cursorVariables.containsKey(nextToken.toString())) {
+					to = nextToken.getOffset();
+					immediateAfterVariable = true;
 					// Modify tokens to be treated as variables.
 					tokens().add(nextToken);
 					tokens().add(PluginTokenUtil.createAssignToken(this, nextToken));
@@ -81,7 +103,31 @@ public class DB2Scanner extends PluginScanner {
 				}
 				if (":".equals(nextToken.toString())) {
 					nextToken = super.nextToken();
+					to = nextToken.getOffset();
+					immediateAfterVariable = true;
 					// Modify tokens().to be treated as variables.
+					tokens().add(nextToken);
+					tokens().add(PluginTokenUtil.createAssignToken(this, nextToken));
+					tokens().add(PluginTokenUtil.createIntegerToken(this, nextToken, "0"));
+					tokens().add(PluginTokenUtil.createSemiToken(this, nextToken));
+					colonStarted = true;
+					immediateAfterComma = false;
+					continue;
+				}
+				if (colonStarted && !";".equals(nextToken.toString())) {
+					immediateAfterVariable = false;
+					// Ignore comma
+					if (",".equals(nextToken.toString())) {
+						immediateAfterComma = true;
+						continue;
+					}
+					if (!immediateAfterComma) {
+						continue;
+					}
+					immediateAfterComma = false;
+					to = nextToken.getOffset();
+					immediateAfterVariable = true;
+					// Modify tokens to be treated as variables.
 					tokens().add(nextToken);
 					tokens().add(PluginTokenUtil.createAssignToken(this, nextToken));
 					tokens().add(PluginTokenUtil.createIntegerToken(this, nextToken, "0"));
@@ -89,12 +135,43 @@ public class DB2Scanner extends PluginScanner {
 					continue;
 				}
 				if (";".equals(nextToken.toString())) {
+					colonStarted = false;
+					immediateAfterComma = false;
+					if (!immediateAfterVariable) {
+						to = nextToken.getOffset();
+					}
+					execSqlPositions.add(new ExecSqlPosition(from, to));
 					tokens().add(nextToken);
 					return clearPrefetchedToken(tokens().poll());
 				}
+				immediateAfterVariable = false;
 			}
 		}
 		return nextToken;
+	}
+
+	public class ExecSqlPosition {
+		int from;
+		int to;
+
+		public ExecSqlPosition(int from, int to) {
+			this.from = from;
+			this.to = to;
+		}
+
+		public int getFrom() {
+			return from;
+		}
+
+		public int getTo() {
+			return to;
+		}
+
+		@Override
+		public String toString() {
+			return from + ":" + to;
+		}
+
 	}
 
 }
