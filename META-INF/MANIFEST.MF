@@ -3,9 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: db2-editor
 Bundle-SymbolicName: plugin.db2;singleton:=true
 Bundle-Vendor: https://github.com/hamneko
-Bundle-Version: 0.2.0
+Bundle-Version: 0.3.0
 Require-Bundle: org.eclipse.cdt.core,
  org.eclipse.core.runtime,
- plugin.common
+ plugin.common,
+ org.eclipse.text
 Automatic-Module-Name: plugin.db2
 Bundle-RequiredExecutionEnvironment: JavaSE-17
