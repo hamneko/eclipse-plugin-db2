@@ -1,1 +1,64 @@
-# eclipse-plugin-db2
+:toc:
+:toclevels: 5
+
+---
+
+= eclipse-plugin-db2
+
+An Eclipse plugin that analyzes and parses https://www.ibm.com/docs/en/db2/11.5.x?topic=language-embedded-sql-statements-in-c-c-applications[DB2 embedded SQL] unique syntax written in C source code.
+
+== Features
+
+* Syntax highlighting
+* Resolve host variables
+* Resolve sqlca without `#include <sqlca.h>` directive
+* Source code formatting
+* Resolve cursor identifier
+
+== Getting Started
+
+=== Prerequisites
+
+* Eclipse CDT (2023.3~)
+
+TIP: Older cdt versions may work, although not tested.
+
+=== Installation
+
+Put ```plugin.db2-x.x.x.YYYYMMDDhhmm.jar``` and ```plugin.common-x.x.x.YYYYMMDDhhmm.jar``` to Eclipse plugins directory (ex.~/eclipse/plugins) and start Eclipse.
+
+TIP: ```plugin.common-x.x.x.YYYYMMDDhhmm.jar``` can be downloaded from https://github.com/hamneko/eclipse-plugin-common/releases[this repository].
+
+=== Change Language Mappings
+
+From eclipse menu bar, select [Window]-[Preferences...]. Under `C/C++` select `Language Mappings`, add following settings and click [Apply and Close].
+
+.Language Mappings
+[options="header"]
+|===
+|Content Type|Language
+|C Header File|DB2
+|C Source File|DB2
+|===
+
+TIP: If you have custom file extension for DB2 file (ex. xxx.sqc), add File Types.
+
+=== Change Formatter
+
+From eclipse menu bar, select [Window]-[Preferences...]. Under `C/C++` - `Code Style` select `Formatter`, change Code Formatter from [built-in] to DB2 and click [Apply and Close].
+
+== Building from Source
+
+Clone the repository:
+
+[source,sh]
+----
+$ git clone https://github.com/hamneko/eclipse-plugin-db2.git
+----
+
+Execute following command in cloned directory:
+
+[source,sh]
+----
+$ ./mvnw clean install
+----
