@@ -17,8 +17,8 @@ import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
 import org.eclipse.cdt.core.parser.ParserMode;
 import org.eclipse.core.runtime.CoreException;
 
+import plugin.common.parser.scanner.ExecSqlPosition;
 import plugin.db2.parser.scanner.DB2Scanner;
-import plugin.db2.parser.scanner.DB2Scanner.ExecSqlPosition;
 
 @SuppressWarnings("restriction")
 public class DB2Language extends GCCLanguage {

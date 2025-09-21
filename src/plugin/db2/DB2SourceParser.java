@@ -13,7 +13,8 @@ import org.eclipse.cdt.internal.core.dom.parser.ASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.BacktrackException;
 import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
 
-import plugin.db2.parser.scanner.DB2Scanner.ExecSqlPosition;
+import plugin.common.parser.scanner.ExecSqlPosition;
+import plugin.common.parser.scanner.PluginTokenUtil;
 
 @SuppressWarnings("restriction")
 public class DB2SourceParser extends GNUCSourceParser {
@@ -38,18 +39,10 @@ public class DB2SourceParser extends GNUCSourceParser {
 			return statement;
 		}
 		ASTNode node = (ASTNode) statement;
-		if (inPosition(node.getOffset())) {
+		if (PluginTokenUtil.inPosition(execSqlPositions, node.getOffset())) {
 			return statement();
 		}
 		return statement;
 	}
 
-	private boolean inPosition(int pos) {
-		for (ExecSqlPosition execSqlPosition : execSqlPositions) {
-			if (execSqlPosition.getFrom() <= pos && (execSqlPosition.getTo() - 2) >= pos) {
-				return true;
-			}
-		}
-		return false;
-	}
 }
