@@ -30,7 +30,7 @@ public class DB2Language extends GCCLanguage {
 
 	@Override
 	public String getId() {
-		return "plugin.db2.editor";
+		return "plugin.db2.language";
 	}
 
 	@SuppressWarnings("unchecked")
