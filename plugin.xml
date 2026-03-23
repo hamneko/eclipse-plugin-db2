@@ -1,19 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+<extension point="org.eclipse.core.contenttype.contentTypes">
+  <content-type
+    id="plugin.db2.DB2FileType"
+    name="DB2 Source File"
+    base-type="org.eclipse.cdt.core.cSource"
+    file-extensions="sqc"
+    priority="high">
+  </content-type>
+</extension>
 <extension point="org.eclipse.cdt.core.language">
   <language
     class="plugin.db2.DB2Language"
     id="editor"
     name="DB2">
-    <contentType id="org.eclipse.cdt.core.cSource" />
-    <contentType id="org.eclipse.cdt.core.cHeader" />
+    <contentType id="plugin.db2.DB2FileType" />
   </language>
 </extension>
 <extension point="org.eclipse.cdt.core.CodeFormatter">
   <formatter
     class="plugin.db2.DB2CodeFormatter"
-    id="formatter"
-    name="DB2"/>
+    id="plugin.db2.formatter"
+    name="DB2" />
+</extension>
+<extension point="org.eclipse.cdt.managedbuilder.core.buildDefinitions">
+  <tool
+    command="gcc"
+    dependencyCalculator="org.eclipse.cdt.managedbuilder.makegen.gnu.DefaultGCCDependencyCalculator"
+    id="plugin.db2.DB2Tool"
+    name="DB2 Tool"
+    natureFilter="both">
+    <option
+      id="plugin.db2.include.paths"
+      name="Include Paths"
+      kind="includePath"
+      valueType="includePath" />
+    <option
+      id="plugin.db2.symbols"
+      name="Defined Symbols"
+      kind="definedSymbol"
+      valueType="definedSymbols" />
+    <inputType
+      dependencyCalculator="org.eclipse.cdt.managedbuilder.makegen.gnu.DefaultGCCDependencyCalculator"
+      dependencyContentType="org.eclipse.cdt.core.cHeader"
+      id="plugin.db2.DB2InputType"
+      languageId="plugin.db2.editor"
+      multipleOfType="false"
+      primaryInput="false"
+      scannerConfigDiscoveryProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfile"
+      sourceContentType="plugin.db2.DB2FileType" />
+  </tool>
 </extension>
 </plugin>
