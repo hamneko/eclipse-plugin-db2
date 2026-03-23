@@ -13,7 +13,7 @@
 <extension point="org.eclipse.cdt.core.language">
   <language
     class="plugin.db2.DB2Language"
-    id="editor"
+    id="language"
     name="DB2">
     <contentType id="plugin.db2.DB2FileType" />
   </language>
@@ -45,7 +45,7 @@
       dependencyCalculator="org.eclipse.cdt.managedbuilder.makegen.gnu.DefaultGCCDependencyCalculator"
       dependencyContentType="org.eclipse.cdt.core.cHeader"
       id="plugin.db2.DB2InputType"
-      languageId="plugin.db2.editor"
+      languageId="plugin.db2.language"
       multipleOfType="false"
       primaryInput="false"
       scannerConfigDiscoveryProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfile"
